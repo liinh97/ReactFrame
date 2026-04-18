@@ -1,0 +1,21 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+        - VITE_APP_NAME=${VITE_APP_NAME}
+    image: ${APP_NAME:-react-app}:${APP_VERSION:-latest}
+    container_name: ${APP_NAME:-react-app}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

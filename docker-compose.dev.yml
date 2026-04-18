@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: react-app-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount toàn bộ source code vào container — sửa file là reload ngay
+      - .:/app
+      # Giữ node_modules của container, không bị override bởi host
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - VITE_APP_NAME=${VITE_APP_NAME}
+      - TZ=Asia/Ho_Chi_Minh
