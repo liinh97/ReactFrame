@@ -1,8 +1,10 @@
 # ⚡ React Template
 
-A production-ready React starter with TypeScript, Tailwind CSS, React Router v6, Axios, Auth Context, and Toast notifications.
+Production-ready React starter với TypeScript, Tailwind CSS, React Router v6, Axios, Auth Context, Toast — kèm Docker cho cả dev lẫn production.
 
-## 🚀 Quick Start — Dùng lại cho project mới
+---
+
+## 🚀 Dùng lại cho project mới
 
 ```bash
 # 1. Clone template
@@ -17,11 +19,121 @@ git init && git add . && git commit -m "chore: init from template"
 git remote add origin https://github.com/YOUR_USERNAME/ten-project-moi.git
 git push -u origin main
 
-# 4. Cài dependencies & chạy
-npm install
-cp .env.example .env   # Sửa .env theo project
-npm run dev
+# 4. Setup env
+cp .env.example .env
+# Sửa .env theo project
 ```
+
+---
+
+## 🐳 Docker
+
+### Cấu trúc file Docker
+
+```
+├── Dockerfile              # Production — multi-stage build (Node → Nginx)
+├── Dockerfile.dev          # Development — chạy Vite dev server
+├── docker-compose.yml      # Production compose
+├── docker-compose.dev.yml  # Development compose (hot reload)
+├── nginx.conf              # Nginx config cho SPA + gzip + cache
+└── .dockerignore
+```
+
+### ⚡ Development — Hot Reload
+
+Sửa file → browser tự reload, **không cần build lại Docker**.
+
+```bash
+# Lần đầu (hoặc khi thêm package mới)
+docker compose -f docker-compose.dev.yml up --build
+
+# Các lần sau (image đã có)
+docker compose -f docker-compose.dev.yml up
+```
+
+Mở trình duyệt: **http://localhost:5173**
+
+```bash
+# Dừng
+docker compose -f docker-compose.dev.yml down
+
+# Xem logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Chạy lệnh bên trong container (ví dụ: thêm package)
+docker compose -f docker-compose.dev.yml exec frontend npm install axios
+```
+
+> **Lưu ý:** Source code được mount trực tiếp từ máy host vào container qua volume,
+> nên Vite HMR hoạt động bình thường. `node_modules` dùng riêng của container,
+> không bị ảnh hưởng bởi `node_modules` trên máy host.
+
+### 🚢 Production
+
+```bash
+# Build image và chạy
+docker compose up -d --build
+
+# Chỉ chạy (image đã build rồi)
+docker compose up -d
+
+# Dừng
+docker compose down
+
+# Dừng và xóa volumes
+docker compose down -v
+
+# Xem logs
+docker compose logs -f
+
+# Xem logs của service cụ thể
+docker compose logs -f frontend
+
+# Rebuild image (khi thay đổi code)
+docker compose up -d --build
+
+# Xem trạng thái các container
+docker compose ps
+```
+
+Mở trình duyệt: **http://localhost:80** (hoặc port đã cấu hình trong `.env`)
+
+### 🔄 Workflow thường ngày
+
+```bash
+# Đang dev → sửa code → browser tự reload
+docker compose -f docker-compose.dev.yml up
+
+# Khi thêm package mới vào package.json
+docker compose -f docker-compose.dev.yml up --build
+
+# Muốn test production build trước khi deploy
+docker compose up --build
+```
+
+### ⚙️ Environment Variables
+
+Tạo file `.env` từ mẫu:
+
+```bash
+cp .env.example .env
+```
+
+```env
+# App (được bake vào lúc build bởi Vite)
+VITE_API_BASE_URL=https://api.example.com
+VITE_APP_NAME=My App
+
+# Docker
+APP_NAME=react-app
+APP_VERSION=latest
+PORT=80
+```
+
+> ⚠️ **Quan trọng:** Vite bake biến `VITE_*` vào lúc **build**, không phải runtime.
+> Nếu đổi giá trị `.env` trong production, phải rebuild lại image: `docker compose up -d --build`
+
+---
 
 ## 📁 Cấu trúc thư mục
 
@@ -55,6 +167,8 @@ src/
 └── styles/                 # Tailwind + component classes (.btn, .input, .card)
 ```
 
+---
+
 ## 🧩 UI Components
 
 | Component | Props chính |
@@ -70,6 +184,8 @@ src/
 | `EmptyState` | `icon`, `title`, `description`, `action` |
 | `Skeleton` / `SkeletonText` / `SkeletonCard` | loading placeholders |
 
+---
+
 ## 🪝 Custom Hooks
 
 ```tsx
@@ -79,6 +195,8 @@ const debouncedSearch = useDebounce(searchTerm, 500)
 const { isOpen, open, close } = useModal()
 const { page, totalPages, next, prev } = usePagination({ total: 100 })
 ```
+
+---
 
 ## 🔐 Authentication
 
@@ -90,6 +208,8 @@ await login(email, password)  // tự lưu token vào localStorage
 { element: <ProtectedRoute />, children: [...protected routes] }
 ```
 
+---
+
 ## 🍞 Toast Notifications
 
 ```tsx
@@ -97,6 +217,8 @@ const { success, error, warning, info } = useToast()
 success('Lưu thành công!')
 error('Có lỗi xảy ra')
 ```
+
+---
 
 ## 📡 Gọi API
 
@@ -112,49 +234,61 @@ await userService.update(1, { name: 'Nam Mới' })
 await userService.delete(1)
 ```
 
-## 🛠️ Scripts
+---
+
+## 🛠️ Scripts (không dùng Docker)
 
 ```bash
-npm run dev       # Dev server (localhost:5173)
-npm run build     # Build production
-npm run preview   # Preview build
-npm run lint      # ESLint
-npm run format    # Prettier
+npm install       # Cài dependencies
+npm run dev       # Dev server tại localhost:5173
+npm run build     # Build production vào /dist
+npm run preview   # Preview production build
+npm run lint      # Chạy ESLint
+npm run format    # Chạy Prettier
 ```
 
-## ⚙️ Environment Variables
+---
 
-```env
-VITE_API_BASE_URL=https://api.example.com
-VITE_APP_NAME=My App
-```
-
-## 🚢 CI/CD — Deploy lên GitHub Pages
-
-File `.github/workflows/deploy.yml` đã được cấu hình sẵn.
-
-1. Push lên nhánh `main`
-2. Vào repo → **Settings → Pages → Source → GitHub Actions**
-3. Thêm secrets: **Settings → Secrets → Actions** (`VITE_API_BASE_URL`, `VITE_APP_NAME`)
-
-## 🔧 Thêm page mới (3 bước)
+## 🔧 Thêm page mới
 
 ```bash
-# 1. Tạo file
+# 1. Tạo file page
 touch src/pages/MyPage.tsx
 
 # 2. Thêm route vào src/router/index.tsx
 { path: 'my-page', element: <MyPage /> }
 
-# 3. (Tuỳ chọn) Thêm nav link vào Navbar.tsx
+# 3. (Tuỳ chọn) Thêm nav link vào src/components/layout/Navbar.tsx
 { to: '/my-page', label: 'My Page' }
 ```
 
+---
+
+## 🚀 CI/CD — GitHub Actions
+
+Khi push lên `main`, workflow tự động build Docker image và push lên **GitHub Container Registry (ghcr.io)**.
+
+**Setup một lần:**
+1. Vào repo → **Settings → Secrets → Actions**
+2. Thêm 2 secrets: `VITE_API_BASE_URL`, `VITE_APP_NAME`
+
+**Pull image về server production:**
+```bash
+docker pull ghcr.io/YOUR_USERNAME/ten-project-moi:latest
+docker compose up -d
+```
+
+---
+
 ## 📦 Tech Stack
 
-- **React 18** + **TypeScript** — UI & type safety
-- **Vite** — Build tool siêu nhanh
-- **Tailwind CSS** — Utility-first styling
-- **React Router v6** — Client-side routing
-- **Axios** — HTTP client với interceptors
-- **ESLint + Prettier** — Code quality
+| | |
+|---|---|
+| **React 18** + **TypeScript** | UI & type safety |
+| **Vite** | Build tool siêu nhanh |
+| **Tailwind CSS** | Utility-first styling |
+| **React Router v6** | Client-side routing |
+| **Axios** | HTTP client với interceptors |
+| **Nginx** | Serve static files (production) |
+| **Docker** | Containerization |
+| **ESLint + Prettier** | Code quality |
